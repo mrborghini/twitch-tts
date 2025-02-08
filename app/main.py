@@ -38,7 +38,7 @@ def convert_message(received_message: str) -> TwitchWSResponse:
     channel = split_spaces[2].replace("#", "")
     email = split_spaces[0]
     username = split_exclamation[0]
-    message = split_colon[len(split_colon) - 1]
+    message = received_message.split(" :")[1]
 
     twitchResponse = TwitchWSResponse(
         username=username,
