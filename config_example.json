@@ -1,0 +1,16 @@
+{
+    "twitch_config": {
+        "twitch_access_token": "",
+        "twitch_name": "",
+        "streamer_channel": ""
+    },
+    "tts_config": {
+        "voices_dir": "voices",
+        "user_chance_tts_percentage": 100,
+        "tts_specific_users": true,
+        "specific_users": [
+            "lambotwitchbot"
+        ],
+        "volume": 0.5
+    }
+}
