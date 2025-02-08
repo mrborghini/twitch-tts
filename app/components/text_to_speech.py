@@ -3,6 +3,7 @@ import os
 import random
 from TTS.api import TTS
 import torch
+from components.config_reader import UserVoice
 
 @dataclass
 class Voice:
@@ -10,7 +11,7 @@ class Voice:
     name: str
 
 class TextToSpeech:
-    def __init__(self, voices_dir: str, lang = "en"):
+    def __init__(self, voices_dir: str, predefined_users: list[UserVoice], lang = "en"):
         # Get device
         if torch.cuda.is_available():
             print("Using GPU")
@@ -18,6 +19,9 @@ class TextToSpeech:
         else:
             print("Using CPU")
             device = "cpu"
+        
+        self.predefined_users = predefined_users
+        self.runtime_users: list[UserVoice] = []
 
         # Init TTS
         self.tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
@@ -58,10 +62,36 @@ class TextToSpeech:
         
         return voices
     
-    def choose_voice(self) -> Voice:
-        random_number = random.randint(0, len(self.voices) - 1)
-        return self.voices[random_number]
-    
-    def generate_speech(self, text: str):
-        voice = self.choose_voice()
+    def choose_voice(self, username: str) -> Voice:
+        for user in self.predefined_users:
+            if user.name == username:
+                for voice in self.voices:
+                    if user.voice == voice.name:
+                        return voice
+        
+        voice: Voice | None = None
+
+        for user in self.runtime_users:
+            if user.name == username:
+                for voice in self.voices:
+                    if voice.name == user.voice:
+                        return voice
+
+        while not voice:
+            random_number = random.randint(0, len(self.voices) - 1)
+            selected_voice = self.voices[random_number]
+
+            duplicate = False
+            for user in self.predefined_users:
+                if selected_voice.name == user.voice:
+                    duplicate = True
+
+            if not duplicate:
+                voice = selected_voice
+                self.runtime_users.append(UserVoice(username, selected_voice.name))
+            
+        return voice
+            
+    def generate_speech(self, text: str, username: str):
+        voice = self.choose_voice(username)
         return self.tts.tts_to_file(text=text, speaker_wav=voice.file_path, language=self.lang, file_path="out.wav")

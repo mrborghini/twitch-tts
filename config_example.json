@@ -7,9 +7,12 @@
     "tts_config": {
         "voices_dir": "voices",
         "user_chance_tts_percentage": 100,
-        "tts_specific_users": true,
+        "tts_everyone": false,
         "specific_users": [
-            "lambotwitchbot"
+            {
+                "name": "lambotwitchbot",
+                "voice": "gabe"
+            }
         ],
         "volume": 0.5
     }

@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-import json
-import logging
 import os
 import subprocess
 import websocket
@@ -17,16 +15,23 @@ class TwitchWSResponse:
 
 
 config = ConfigReader.read_and_parse()
-
-queue: list[str] = []
+queue: list[TwitchWSResponse] = []
 busy = False
-tts = TextToSpeech(config.tts_config.voices_dir)
+tts = TextToSpeech(config.tts_config.voices_dir, config.tts_config.specific_users)
 
 def play_sound(audio_path: str):
-    subprocess.run(["ffplay", "-nodisp", "-autoexit", audio_path, "-af", f"volume={config.tts_config.volume}"])
+    subprocess.run(
+        [
+            "ffplay", 
+            "-nodisp", 
+            "-autoexit", "-loglevel", 
+            "quiet", audio_path, 
+            "-af", 
+            f"volume={config.tts_config.volume}"
+        ])
 
-def generate_and_play(text: str):
-    output = tts.generate_speech(text)
+def generate_and_play(text: str, username: str):
+    output = tts.generate_speech(text, username)
     play_sound(output)
     os.remove(output)
 
@@ -57,7 +62,8 @@ def update_queue():
     busy = True
 
     for item in queue:
-        generate_and_play(item)
+        print(f"generating {item.content}...")
+        generate_and_play(item.content, item.username)
         queue.pop(0)
 
     if len(queue) != 0:
@@ -76,8 +82,8 @@ def on_message(ws: websocket.WebSocketApp, message: str):
         return
     
     twitch_response = convert_message(trimmed_message)
-    print(twitch_response)
-    queue.append(twitch_response.content)
+    print(f"Received message from {twitch_response.username}: '{twitch_response.content}'")
+    queue.append(twitch_response)
     update_queue()
 
 def on_error(ws: websocket.WebSocketApp, error):
@@ -92,7 +98,7 @@ def on_open(ws: websocket.WebSocketApp):
     ws.send(f"JOIN #{config.twitch_config.streamer_channel}")
     connection_message = f"Successfully connected to Twitch channel {config.twitch_config.streamer_channel}!"
     print(connection_message)
-    generate_and_play(connection_message)
+    generate_and_play(connection_message, "")
 
 def main():
     websocket.enableTrace(False)
