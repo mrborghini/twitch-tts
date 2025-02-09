@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import os
+import random
 import subprocess
 import threading
 import time
@@ -36,6 +37,9 @@ generation_queue: list[TwitchWSResponse] = []
 generation_queue_lock = False
 
 tts = TextToSpeech(config.tts_config.voices_dir, config.tts_config.specific_users)
+
+def chance(percentage: float):
+    return random.uniform(0, 100) < percentage
 
 def play_sound(audio_path: str):
     subprocess.run(
@@ -125,8 +129,12 @@ def on_message(ws: websocket.WebSocketApp, message: str):
     
     twitch_response = convert_message(trimmed_message)
     print(f"Received message from {twitch_response.username}: '{twitch_response.content}'")
-    generation_queue.append(twitch_response)
-    update_generation_queue()
+    if chance(config.tts_config.user_chance_tts_percentage):
+        generation_queue.append(twitch_response)
+        update_generation_queue()
+        return
+
+    print(f"{twitch_response.username}'s message was not selected due to RNG")
 
 def on_error(ws: websocket.WebSocketApp, error):
     print(error)

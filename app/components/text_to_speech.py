@@ -32,9 +32,6 @@ class TextToSpeech:
 
         self.voices = self.get_voices(voices_dir)
 
-    def chance(percentage: float):
-        return random.uniform(0, 100) < percentage
-
     def sanitize_filename(self, filename: str, max_length: int = 150) -> str:
         # Replace invalid characters with hyphens and truncate to max_length
         invalid_chars = '\\/:*?"<>|'
