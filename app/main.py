@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import subprocess
+import threading
 import websocket
 import rel
 from components import splash_screen
@@ -44,8 +45,25 @@ def play_sound(audio_path: str):
 
 def generate_and_play(text: str, username: str):
     output = tts.generate_speech(text, username)
-    play_sound(output)
-    os.remove(output)
+    threading.Thread(target=play_sound, args=(output,), daemon=True).start()
+    # os.remove(output)
+
+def update_queue():
+    global busy
+    if busy:
+        return
+    
+    busy = True
+
+    for item in queue:
+        print(f"generating {item.content}...")
+        generate_and_play(item.content, item.username)
+        queue.pop(0)
+
+    if len(queue) != 0:
+        update_queue()
+    
+    busy = False
 
 def convert_message(received_message: str) -> TwitchWSResponse:
     split_colon = received_message.split(":")
@@ -64,24 +82,7 @@ def convert_message(received_message: str) -> TwitchWSResponse:
         content=message,
     )
 
-    return twitchResponse;
-
-def update_queue():
-    global busy
-    if busy:
-        return
-    
-    busy = True
-
-    for item in queue:
-        print(f"generating {item.content}...")
-        generate_and_play(item.content, item.username)
-        queue.pop(0)
-
-    if len(queue) != 0:
-        update_queue()
-    
-    busy = False
+    return twitchResponse
         
 
 def on_message(ws: websocket.WebSocketApp, message: str):
@@ -108,7 +109,7 @@ def on_open(ws: websocket.WebSocketApp):
     ws.send(f"PASS oauth:{config.twitch_config.twitch_access_token}")
     ws.send(f"NICK {config.twitch_config.twitch_name}")
     ws.send(f"JOIN #{config.twitch_config.streamer_channel}")
-    connection_message = f"Successfully connected to Twitch channel {config.twitch_config.streamer_channel}!"
+    connection_message = f"Successfully connected to Twitch channel {config.twitch_config.streamer_channel.lower()}!"
     print(connection_message)
     generate_and_play(connection_message, "")
 
