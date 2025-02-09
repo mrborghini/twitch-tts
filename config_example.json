@@ -9,6 +9,7 @@
         "user_chance_tts_percentage": 100,
         "tts_everyone": false,
         "wait_for_audio_to_finish_playing": true,
+        "delete_generations_after_playing": true,
         "specific_users": [
             {
                 "name": "lambotwitchbot",

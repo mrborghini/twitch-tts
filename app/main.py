@@ -47,7 +47,8 @@ def play_sound(audio_path: str):
             "-af", 
             f"volume={config.tts_config.volume}"
         ])
-    os.remove(audio_path)
+    if config.tts_config.delete_generations_after_playing:
+        os.remove(audio_path)
 
 def generate_and_play(text: str, username: str):
     time.sleep(0.1)

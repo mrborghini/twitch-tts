@@ -20,6 +20,7 @@ class TTSConfig:
     specific_users: UserVoice
     volume: float
     wait_for_audio_to_finish_playing: bool
+    delete_generations_after_playing: bool
 
 @dataclass
 class Config:
@@ -53,5 +54,6 @@ class ConfigReader:
                 tts_everyone=tts_config.get("tts_everyone", False),
                 specific_users=specific_users,
                 volume=tts_config.get("volume", 0.5),
-                wait_for_audio_to_finish_playing=tts_config.get("wait_for_audio_to_finish_playing", True)
+                wait_for_audio_to_finish_playing=tts_config.get("wait_for_audio_to_finish_playing", True),
+                delete_generations_after_playing=tts_config.get("delete_generations_after_playing", True),
             ))
