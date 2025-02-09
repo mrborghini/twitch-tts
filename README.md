@@ -40,3 +40,5 @@ performance:
 ```bash
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
 ```
+
+You must have ffmpeg installed with ffplay support
