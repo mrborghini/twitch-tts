@@ -68,16 +68,38 @@ class TextToSpeech:
         
         return voices
     
+    def get_available_voices(self) -> list[Voice]:
+        found_voices: list[Voice] = []
+        for voice in self.voices:
+            unavailable = False
+            for user in self.predefined_users:
+                if voice.name == user.voice:
+                    unavailable = True
+
+            for user in self.runtime_users:
+                if voice.name == user.voice:
+                    unavailable = True
+
+            if not unavailable:
+                found_voices.append(voice)
+        
+        return found_voices
+        
+    
     def choose_voice(self, username: str) -> Voice:
         if username == "":
             random_number = random.randint(0, len(self.voices) - 1)
             return self.voices[random_number]
+
+        available_voices: list[Voice] = []
 
         for user in self.predefined_users:
             if user.name == username:
                 for voice in self.voices:
                     if user.voice == voice.name:
                         return voice
+                    else:
+                        available_voices.append(voice)
         
         voice: Voice | None = None
 
@@ -87,9 +109,17 @@ class TextToSpeech:
                     if voice.name == user.voice:
                         return voice
 
+        available_voices = self.get_available_voices()
+
         while not voice:
             random_number = random.randint(0, len(self.voices) - 1)
             selected_voice = self.voices[random_number]
+
+            if len(available_voices) != 0:
+                random_number = random.randint(0, len(available_voices) - 1)
+                selected_voice = available_voices[random_number]
+            else:
+                print(f"No other voices available. Choosing a random one for {username}")
 
             duplicate = False
             for user in self.predefined_users:
@@ -98,6 +128,7 @@ class TextToSpeech:
 
             if not duplicate:
                 voice = selected_voice
+                print(f"{username} now has {selected_voice.name} as their voice")
                 self.runtime_users.append(UserVoice(username, selected_voice.name))
             
         return voice
