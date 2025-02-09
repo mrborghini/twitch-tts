@@ -17,7 +17,7 @@ class TTSConfig:
     voices_dir: str
     user_chance_tts_percentage: float
     tts_everyone: bool
-    specific_users: UserVoice
+    specific_users: list[UserVoice]
     volume: float
     wait_for_audio_to_finish_playing: bool
     delete_generations_after_playing: bool

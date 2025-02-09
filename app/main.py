@@ -98,6 +98,13 @@ def update_generation_queue():
     
     generation_queue_lock = False
 
+def is_in_config(username: str):
+    for user in config.tts_config.specific_users:
+        if username == user.name:
+            return True
+
+    return False
+
 def convert_message(received_message: str) -> TwitchWSResponse:
     split_colon = received_message.split(":")
     split_exclamation = split_colon[1].split("!")
@@ -129,7 +136,7 @@ def on_message(ws: websocket.WebSocketApp, message: str):
     
     twitch_response = convert_message(trimmed_message)
     print(f"Received message from {twitch_response.username}: '{twitch_response.content}'")
-    if chance(config.tts_config.user_chance_tts_percentage):
+    if chance(config.tts_config.user_chance_tts_percentage) or is_in_config(twitch_response.username):
         generation_queue.append(twitch_response)
         update_generation_queue()
         return
