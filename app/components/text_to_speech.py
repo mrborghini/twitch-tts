@@ -68,6 +68,10 @@ class TextToSpeech:
         return voices
     
     def choose_voice(self, username: str) -> Voice:
+        if username == "":
+            random_number = random.randint(0, len(self.voices) - 1)
+            return self.voices[random_number]
+
         for user in self.predefined_users:
             if user.name == username:
                 for voice in self.voices:

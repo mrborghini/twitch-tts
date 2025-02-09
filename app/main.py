@@ -3,6 +3,7 @@ import os
 import subprocess
 import websocket
 import rel
+from components import splash_screen
 from components.text_to_speech import TextToSpeech
 from components.config_reader import ConfigReader
 
@@ -13,6 +14,7 @@ class TwitchWSResponse:
     channel: str
     content: str
 
+splash_screen.splash_screen()
 
 config = ConfigReader.read_and_parse()
 if config.tts_config.volume > 2:
