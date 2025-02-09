@@ -15,6 +15,16 @@ class TwitchWSResponse:
 
 
 config = ConfigReader.read_and_parse()
+if config.tts_config.volume > 2:
+    print(f"Warning: your volume is set to '{config.tts_config.volume}'. This is extemely loud.")
+    print("An acceptable volume is between '0.1' and '2.0'")
+    confirmation = input("Do you wish to continue? (y/n): ")
+
+    lowered_confirmation = confirmation.lower().strip()
+
+    if not lowered_confirmation == "yes" and not lowered_confirmation == "y":
+        exit(0)
+
 queue: list[TwitchWSResponse] = []
 busy = False
 tts = TextToSpeech(config.tts_config.voices_dir, config.tts_config.specific_users)
