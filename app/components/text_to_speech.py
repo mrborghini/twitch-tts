@@ -101,8 +101,18 @@ class TextToSpeech:
                 self.runtime_users.append(UserVoice(username, selected_voice.name))
             
         return voice
+    
+    def create_generations_dir(self):
+        dir_name = "generations"
+        if os.path.exists(dir_name):
+            if os.path.isdir(dir_name):
+                return dir_name
+        os.mkdir(dir_name)
+        return dir_name
             
     def generate_speech(self, text: str, username: str):
+        dir_name = self.create_generations_dir()
+
         voice = self.choose_voice(username)
         current_time = f"{time.time() / 1000}"
-        return self.tts.tts_to_file(text=text, speaker_wav=voice.file_path, language=self.lang, file_path=f"{current_time}.wav")
+        return self.tts.tts_to_file(text=text, speaker_wav=voice.file_path, language=self.lang, file_path=f"{dir_name}/{current_time}.wav")
