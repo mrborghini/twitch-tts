@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import os
 import random
+import time
 from TTS.api import TTS
 import torch
 from components.config_reader import UserVoice
@@ -103,4 +104,5 @@ class TextToSpeech:
             
     def generate_speech(self, text: str, username: str):
         voice = self.choose_voice(username)
-        return self.tts.tts_to_file(text=text, speaker_wav=voice.file_path, language=self.lang, file_path="out.wav")
+        current_time = f"{time.time() / 1000}"
+        return self.tts.tts_to_file(text=text, speaker_wav=voice.file_path, language=self.lang, file_path=f"{current_time}.wav")

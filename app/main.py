@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import os
 import subprocess
 import threading
+import time
 import websocket
 import rel
 from components import splash_screen
@@ -28,8 +29,12 @@ if config.tts_config.volume > 2:
     if not lowered_confirmation == "yes" and not lowered_confirmation == "y":
         exit(0)
 
-queue: list[TwitchWSResponse] = []
-busy = False
+playback_queue: list[str] = []
+playback_queue_lock = False
+
+generation_queue: list[TwitchWSResponse] = []
+generation_queue_lock = False
+
 tts = TextToSpeech(config.tts_config.voices_dir, config.tts_config.specific_users)
 
 def play_sound(audio_path: str):
@@ -42,28 +47,51 @@ def play_sound(audio_path: str):
             "-af", 
             f"volume={config.tts_config.volume}"
         ])
+    os.remove(audio_path)
 
 def generate_and_play(text: str, username: str):
+    time.sleep(0.1)
     output = tts.generate_speech(text, username)
     threading.Thread(target=play_sound, args=(output,), daemon=True).start()
-    # os.remove(output)
 
-def update_queue():
-    global busy
-    if busy:
+def update_playback_queue():
+    global playback_queue_lock
+    if playback_queue_lock:
         return
     
-    busy = True
+    playback_queue_lock = True
 
-    for item in queue:
-        print(f"generating {item.content}...")
-        generate_and_play(item.content, item.username)
-        queue.pop(0)
+    for audio in playback_queue:
+        thread = threading.Thread(target=play_sound, args=(audio,), daemon=True)
+        thread.start()
+        if config.tts_config.wait_for_audio_to_finish_playing:
+            thread.join()
 
-    if len(queue) != 0:
-        update_queue()
+        playback_queue.pop(0)
+
+    if len(playback_queue) != 0:
+        update_playback_queue()
+
+    playback_queue_lock = False
+
+def update_generation_queue():
+    global generation_queue_lock
+    if generation_queue_lock:
+        return
     
-    busy = False
+    generation_queue_lock = True
+
+    for item in generation_queue:
+        print(f"generating {item.content}...")
+        output = tts.generate_speech(item.content, item.username)
+        playback_queue.append(output)
+        threading.Thread(target=update_playback_queue, daemon=True).start()
+        generation_queue.pop(0)
+
+    if len(generation_queue) != 0:
+        update_generation_queue()
+    
+    generation_queue_lock = False
 
 def convert_message(received_message: str) -> TwitchWSResponse:
     split_colon = received_message.split(":")
@@ -96,8 +124,8 @@ def on_message(ws: websocket.WebSocketApp, message: str):
     
     twitch_response = convert_message(trimmed_message)
     print(f"Received message from {twitch_response.username}: '{twitch_response.content}'")
-    queue.append(twitch_response)
-    update_queue()
+    generation_queue.append(twitch_response)
+    update_generation_queue()
 
 def on_error(ws: websocket.WebSocketApp, error):
     print(error)
