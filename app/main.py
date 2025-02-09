@@ -87,11 +87,15 @@ def update_generation_queue():
     generation_queue_lock = True
 
     for item in generation_queue:
-        print(f"generating {item.content}...")
-        output = tts.generate_speech(item.content, item.username)
-        playback_queue.append(output)
-        threading.Thread(target=update_playback_queue, daemon=True).start()
-        generation_queue.pop(0)
+        try:
+            print(f"generating {item.content}...")
+            output = tts.generate_speech(item.content, item.username)
+            playback_queue.append(output)
+            threading.Thread(target=update_playback_queue, daemon=True).start()
+        except Exception as e:
+            print(f"Could not generate {str(e)}")
+        finally:
+            generation_queue.pop(0)
 
     if len(generation_queue) != 0:
         update_generation_queue()
